@@ -53,3 +53,7 @@ class Mem0Agent:
     def clear_memory(self):
         """Очистка всей памяти пользователя"""
         self.memory.delete_all(user_id=self.user_id)
+
+    def add_memory(self, text, metadata=None):
+        """Добавить воспоминание вручную (например, из документа)"""
+        self.memory.add(text, user_id=self.user_id, metadata=metadata)

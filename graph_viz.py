@@ -42,7 +42,7 @@ class Neo4jGraphViz:
             m.text as m_text,
             n.id as n_id,
             m.id as m_id
-        LIMIT 300
+        LIMIT 1000
         """
         
         with self.driver.session() as session:

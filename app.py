@@ -3,6 +3,8 @@ import streamlit as st
 from agent import Mem0Agent
 from graph_viz import Neo4jGraphViz
 import os
+import PyPDF2
+from io import StringIO
 
 st.set_page_config(page_title="Mem0Graph", layout="wide", page_icon="🕸️")
 
@@ -17,100 +19,133 @@ if 'graph_viz' not in st.session_state:
 if 'messages' not in st.session_state:
     st.session_state.messages = []
 
-# === Боковая панель: Чат ===
-with st.sidebar:
-    st.header("💬 Диалог с агентом")
-    
-    user_input = st.chat_input("Расскажите факт о себе...")
-    
-    if user_input:
-        st.session_state.messages.append({"role": "user", "content": user_input})
-        with st.chat_message("user"):
-            st.write(user_input)
+# === Функции ===
+def process_uploaded_file(uploaded_file):
+    """Обработка загруженного файла"""
+    try:
+        text = ""
+        if uploaded_file.type == "application/pdf":
+            reader = PyPDF2.PdfReader(uploaded_file)
+            for page in reader.pages:
+                text += page.extract_text() + "\n"
+        elif uploaded_file.type == "text/plain":
+            stringio = StringIO(uploaded_file.getvalue().decode("utf-8"))
+            text = stringio.read()
         
-        with st.chat_message("assistant"):
-            with st.spinner("Сохраняю в граф памяти..."):
-                answer = st.session_state.agent.chat(user_input)
-                st.write(answer)
-                st.session_state.messages.append({"role": "assistant", "content": answer})
-                st.rerun()
+        if text:
+            with st.spinner("Добавляю содержимое документа в память..."):
+                st.session_state.agent.add_memory(text, metadata={"source": uploaded_file.name})
+            st.success(f"✅ Файл '{uploaded_file.name}' успешно обработан!")
+        else:
+            st.warning("Файл пуст или не удалось извлечь текст.")
+            
+    except Exception as e:
+        st.error(f"Ошибка при обработке файла: {e}")
+
+# === Боковая панель ===
+with st.sidebar:
+    st.header("⚙️ Управление")
     
+    # Загрузка документов
+    st.subheader("📂 Загрузка документов")
+    uploaded_file = st.file_uploader("Загрузить файл (TXT, PDF)", type=["txt", "pdf"])
+    if uploaded_file is not None:
+        if st.button("Обработать файл"):
+            process_uploaded_file(uploaded_file)
+            
     st.divider()
     
-    with st.expander("Последние сообщения"):
-        for msg in st.session_state.messages[-4:]:
-            st.text(f"{msg['role']}: {msg['content'][:50]}...")
-    
-    st.info("""
-    💡 **Попробуйте сказать:**
-    - "Меня зовут Алексей"
-    - "Я работаю разработчиком"
-    - "Люблю Python и графы"
-    - "Живу в Москве"
-    """)
-
-# === Основная область: Граф знаний ===
-st.header("Карта знаний")
-
-col_graph, col_stats = st.columns([3, 1])
-
-with col_graph:
-    if st.button("Обновить граф", type="primary", use_container_width=True):
-        with st.spinner("🔍 Запрашиваю граф из Neo4j..."):
-            try:
-                filename = st.session_state.graph_viz.save_graph(
-                    user_id="user_1", 
-                    filename="knowledge_graph.html"
-                )
-                
-                if filename and os.path.exists(filename):
-                    with open(filename, "r", encoding="utf-8") as f:
-                        st.components.v1.html(f.read(), height=650)
-                    st.success("✅ Граф обновлён!")
-                else:
-                    st.warning("📭 Граф пуст. Начните диалог, чтобы создать воспоминания!")
-                    
-            except Exception as e:
-                st.error(f"Ошибка: {e}")
-                with st.expander("🔧 Детали ошибки"):
-                    st.code(str(e))
-
-with col_stats:
+    # Статистика
+    st.subheader("📊 Статистика")
     memories = st.session_state.agent.get_all_memories()
     count = len(memories) if memories else 0
-    
     st.metric("Воспоминаний", count)
     
-    # Статус подключения к Neo4j
+    # Статус подключения
     try:
         is_connected = st.session_state.graph_viz.test_connection()
-        if is_connected:
-            st.metric("🔗 Neo4j", "🟢 Подключено")
-        else:
-            st.metric("🔗 Neo4j", "🔴 Ошибка")
-    except Exception as e:
-        st.metric("🔗 Neo4j", "🔴 Ошибка")
-    
+        status_color = "🟢" if is_connected else "🔴"
+        st.metric("Neo4j", f"{status_color} {'Подключено' if is_connected else 'Ошибка'}")
+    except:
+        st.metric("Neo4j", "🔴 Ошибка")
+        
     st.divider()
     
-    # Кнопка очистки памяти
+    # Очистка
     if st.button("🗑️ Очистить память", type="secondary", use_container_width=True):
-        with st.spinner("Очищаю базу знаний..."):
-            try:
-                st.session_state.agent.clear_memory()
-                st.session_state.messages = []  # Очищаем историю чата
-                st.success("✅ Память полностью очищена!")
-                st.rerun()
-            except Exception as e:
-                st.error(f"Ошибка при очистке: {e}")
+        st.session_state.show_confirm = True
 
-    st.markdown("### Как это работает")
-    st.markdown("""
-    1. Вы пишете факт
-    2. Mem0 извлекает **сущности** и **связи**
-    3. Данные пишутся в **Neo4j** как узлы и рёбра
-    4. Визуализатор читает **нативный граф**
-    """)
+    if st.session_state.get('show_confirm', False):
+        st.warning("Вы уверены? Это действие необратимо.")
+        if st.button("Да, удалить всё", type="primary"):
+            st.session_state.agent.clear_memory()
+            st.session_state.messages = []
+            st.session_state.show_confirm = False
+            st.success("Память очищена!")
+            st.rerun()
+        if st.button("Отмена"):
+            st.session_state.show_confirm = False
+            st.rerun()
+
+# === Основная область: Вкладки ===
+tab_chat, tab_graph = st.tabs(["💬 Чат с агентом", "🕸️ Граф знаний"])
+
+# --- Вкладка 1: Чат ---
+with tab_chat:
+    st.header("Диалог")
+    
+    # Вывод истории сообщений
+    for msg in st.session_state.messages:
+        with st.chat_message(msg["role"]):
+            st.write(msg["content"])
+            
+    # Ввод нового сообщения
+    if prompt := st.chat_input("Напишите сообщение..."):
+        # Добавляем сообщение пользователя
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.write(prompt)
+            
+        # Получаем ответ агента
+        with st.chat_message("assistant"):
+            with st.spinner("Думаю и обновляю граф..."):
+                response = st.session_state.agent.chat(prompt)
+                st.write(response)
+                st.session_state.messages.append({"role": "assistant", "content": response})
+
+# --- Вкладка 2: Граф ---
+with tab_graph:
+    col_ctrl, col_view = st.columns([1, 4])
+    
+    with col_ctrl:
+        st.subheader("Управление графом")
+        if st.button("🔄 Обновить граф", type="primary", use_container_width=True):
+            st.session_state.graph_updated = True
+            
+        st.info("""
+        **Легенда:**
+        - 🔵 **User**: Пользователь
+        - 🟠 **Entity**: Сущности
+        - 🟢 **Memory**: Воспоминания
+        """)
+            
+    with col_view:
+        if st.session_state.get('graph_updated', False) or st.button("Показать граф"):
+            with st.spinner("Строю граф..."):
+                try:
+                    filename = st.session_state.graph_viz.save_graph(
+                        user_id="user_1", 
+                        filename="knowledge_graph.html"
+                    )
+                    
+                    if filename and os.path.exists(filename):
+                        with open(filename, "r", encoding="utf-8") as f:
+                            st.components.v1.html(f.read(), height=700)
+                    else:
+                        st.warning("Граф пока пуст.")
+                except Exception as e:
+                    st.error(f"Ошибка визуализации: {e}")
+            st.session_state.graph_updated = False
 
 # === Нижняя панель: отладка ===
 with st.expander("🗄️ Сырые данные из Mem0"):
