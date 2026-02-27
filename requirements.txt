@@ -1,0 +1,9 @@
+mem0ai>=0.1.30
+chromadb>=0.4.22
+neo4j>=5.15.0
+streamlit>=1.30.0
+networkx>=3.2.1
+pyvis>=0.3.2
+openai>=1.10.0
+python-dotenv>=1.0.1
+sentence-transformers>=2.2.0
