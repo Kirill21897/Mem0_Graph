@@ -1,4 +1,3 @@
-# config.py
 import os
 from dotenv import load_dotenv
 
@@ -39,3 +38,4 @@ MEM0_CONFIG = {
         }
     }
 }
+

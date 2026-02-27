@@ -1,6 +1,5 @@
-
 from mem0 import Memory
-from config import MEM0_CONFIG
+from mem0_graph.config import MEM0_CONFIG
 import os
 from dotenv import load_dotenv
 
@@ -31,3 +30,4 @@ try:
 
 except Exception as e:
     print(f"Error: {e}")
+

@@ -1,7 +1,7 @@
 # app.py
 import streamlit as st
-from agent import Mem0Agent
-from graph_viz import Neo4jGraphViz
+from mem0_graph.agent import Mem0Agent
+from mem0_graph.graph_viz import Neo4jGraphViz
 import os
 import PyPDF2
 from io import StringIO

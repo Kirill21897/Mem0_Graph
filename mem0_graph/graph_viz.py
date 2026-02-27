@@ -1,4 +1,3 @@
-# graph_viz.py
 from neo4j import GraphDatabase
 from pyvis.network import Network
 
@@ -170,3 +169,4 @@ class Neo4jGraphViz:
         except Exception as e:
             print(f"Connection error: {e}")
             return False
+

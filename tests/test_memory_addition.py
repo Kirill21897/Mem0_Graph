@@ -1,7 +1,7 @@
-
 from mem0 import Memory
-from config import MEM0_CONFIG
+from mem0_graph.config import MEM0_CONFIG
 import time
+
 
 def test_addition():
     memory = Memory.from_config(MEM0_CONFIG)
@@ -12,7 +12,7 @@ def test_addition():
     
     print("Adding first memory: 'I like apples'")
     memory.add("I like apples", user_id=user_id)
-    time.sleep(2) # Allow async processing if any
+    time.sleep(2)  # Allow async processing if any
     
     print("Adding second memory: 'I like oranges'")
     memory.add("I like oranges", user_id=user_id)
@@ -30,5 +30,7 @@ def test_addition():
     all_mem = memory.get_all(user_id=user_id)
     print("All memories:", all_mem)
 
+
 if __name__ == "__main__":
     test_addition()
+

@@ -1,6 +1,5 @@
-# agent.py
 from mem0 import Memory
-from config import MEM0_CONFIG
+from .config import MEM0_CONFIG
 import openai
 import os
 from dotenv import load_dotenv
@@ -174,3 +173,4 @@ class Mem0Agent:
             except Exception as e:
                 print(f"[Mem0Agent.add_memory] add error: {e}")
         return results
+

@@ -1,4 +1,3 @@
-
 from neo4j import GraphDatabase
 
 uri = "bolt://localhost:7687"
@@ -6,6 +5,7 @@ user = "neo4j"
 password = "password123"
 
 driver = GraphDatabase.driver(uri, auth=(user, password))
+
 
 def print_graph_structure():
     with driver.session() as session:
@@ -29,7 +29,10 @@ def print_graph_structure():
         for record in result:
             print(record['r'])
 
-try:
-    print_graph_structure()
-finally:
-    driver.close()
+
+if __name__ == "__main__":
+    try:
+        print_graph_structure()
+    finally:
+        driver.close()
+

@@ -1,10 +1,10 @@
-
 from neo4j import GraphDatabase
 
 uri = "bolt://localhost:7687"
 user = "neo4j"
 password = "password123"
 driver = GraphDatabase.driver(uri, auth=(user, password))
+
 
 def test_query():
     user_id = "user_1"
@@ -38,9 +38,12 @@ def test_query():
         for i, d in enumerate(data[:3]):
             print(f"Record {i}: {d}")
 
-try:
-    test_query()
-except Exception as e:
-    print(f"Error: {e}")
-finally:
-    driver.close()
+
+if __name__ == "__main__":
+    try:
+        test_query()
+    except Exception as e:
+        print(f"Error: {e}")
+    finally:
+        driver.close()
+
