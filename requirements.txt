@@ -7,3 +7,6 @@ pyvis>=0.3.2
 openai>=1.10.0
 python-dotenv>=1.0.1
 sentence-transformers>=2.2.0
+PyPDF2>=3.0.1
+langchain_neo4j>=0.2.2
+rank_bm25>=0.2.0

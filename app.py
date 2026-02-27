@@ -151,15 +151,21 @@ with tab_graph:
 with st.expander("🗄️ Сырые данные из Mem0"):
     memories = st.session_state.agent.get_all_memories()
     if memories:
-        # Преобразуем в список если нужно
-        if isinstance(memories, dict):
-            memories_list = list(memories.values())[:10]
-        elif hasattr(memories, '__iter__') and not isinstance(memories, str):
-            memories_list = list(memories)[:10]
-        else:
-            memories_list = [memories]
-        
-        st.json(memories_list)
+        preview = []
+        for m in memories[:10]:
+            if isinstance(m, dict):
+                preview.append(
+                    {
+                        "id": m.get("id"),
+                        "text": m.get("memory"),
+                        "score": m.get("score"),
+                        "metadata": m.get("metadata"),
+                    }
+                )
+            else:
+                preview.append({"text": str(m)})
+
+        st.json(preview)
     else:
         st.text("Нет данных")
 
